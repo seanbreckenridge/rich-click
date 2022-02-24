@@ -212,7 +212,7 @@ def _get_parameter_help(param, ctx):
 
     # Default value
     show_default_val = _get_param_value(param, ctx, "show_default")
-    ## hmm -- show_default returns None even when ctx has a value set, since
+    ## hmm -- show_default returns False even when ctx has a value set, since
     # show_default=False is the default for the parameter? Not sure how click
     # properly resolves this
     breakpoint()
