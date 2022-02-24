@@ -149,6 +149,30 @@ def _get_help_text(obj):
         yield _make_rich_rext(remaining_lines, STYLE_HELPTEXT)
 
 
+def _get_param_value(param, ctx, attr):
+    """Fetch the attr from param if it exists, else check the click Context
+
+    This lets commands/groups define context settings which then get inherited
+    by child commands/options
+    https://click.palletsprojects.com/en/8.0.x/api/#click.Command
+
+    Args:
+        param (click.Option or click.Argument): Option or argument to fetch value for
+        ctx (click.Context): Click Context object
+        attr: (str): The attribute name to check for
+
+    Returns:
+        Value set by user or None, if unset
+    """
+
+    # try to fetch from values set on the argument/option itself
+    val = getattr(param, attr, None)
+    if val is not None:
+        return None
+    # fetch from the surrounding context, or return None
+    return getattr(ctx, attr, None)
+
+
 def _get_parameter_help(param, ctx):
     """Build primary help text for a click option or argument.
 
@@ -166,8 +190,9 @@ def _get_parameter_help(param, ctx):
 
     items = []
 
-    if getattr(param, "help", None):
-        items.append(_make_rich_rext(param.help, STYLE_OPTION_HELP))
+    help_val = _get_param_value(param, ctx, "help")
+    if help_val:
+        items.append(_make_rich_rext(help_val, STYLE_OPTION_HELP))
 
     # Append metavar if requested
     if APPEND_METAVARS_HELP:
@@ -186,6 +211,11 @@ def _get_parameter_help(param, ctx):
             )
 
     # Default value
+    show_default_val = _get_param_value(param, ctx, "show_default")
+    ## hmm -- show_default returns None even when ctx has a value set, since
+    # show_default=False is the default for the parameter? Not sure how click
+    # properly resolves this
+    breakpoint()
     if getattr(param, "show_default", None):
         # param.default is the value, but click is a bit clever in choosing what to show here
         # eg. --debug/--no-debug, default=False will show up as [default: no-debug] instead of [default: False]
